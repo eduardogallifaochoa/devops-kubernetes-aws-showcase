@@ -1,0 +1,114 @@
+name: cd
+
+on:
+  workflow_run:
+    workflows: ["ci"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      target_environment:
+        description: "Environment to deploy"
+        required: true
+        type: choice
+        options:
+          - dev
+          - qa
+        default: qa
+      image_tag:
+        description: "Image tag to deploy (example: latest or sha-<GIT_SHA>)"
+        required: true
+        default: latest
+
+permissions:
+  contents: read
+  packages: read
+  deployments: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    outputs:
+      target_environment: ${{ steps.vars.outputs.target_environment }}
+      image_ref: ${{ steps.vars.outputs.image_ref }}
+      image_tag: ${{ steps.vars.outputs.image_tag }}
+    steps:
+      - name: Resolve deployment variables
+        id: vars
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            TARGET_ENV="dev"
+            TAG="sha-${{ github.event.workflow_run.head_sha }}"
+          else
+            TARGET_ENV="${{ inputs.target_environment }}"
+            TAG="${{ inputs.image_tag }}"
+          fi
+
+          IMAGE_REF="ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${TAG}"
+
+          echo "target_environment=${TARGET_ENV}" >> "$GITHUB_OUTPUT"
+          echo "image_tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "image_ref=${IMAGE_REF}" >> "$GITHUB_OUTPUT"
+
+  deploy-dev:
+    runs-on: ubuntu-latest
+    needs: prepare
+    if: needs.prepare.outputs.target_environment == 'dev'
+    environment:
+      name: dev
+    steps:
+      - name: Authenticate to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull image
+        run: docker pull "${{ needs.prepare.outputs.image_ref }}"
+
+      - name: Smoke test image as DEV
+        run: |
+          docker run -d --rm --name api-dev-cd \
+            -e APP_ENV=dev \
+            -e APP_VERSION="${{ needs.prepare.outputs.image_tag }}" \
+            -p 18000:8000 \
+            "${{ needs.prepare.outputs.image_ref }}"
+          sleep 5
+          curl -fsS http://localhost:18000/health
+
+      - name: Stop smoke container
+        if: always()
+        run: docker rm -f api-dev-cd || true
+
+  deploy-qa:
+    runs-on: ubuntu-latest
+    needs: prepare
+    if: needs.prepare.outputs.target_environment == 'qa'
+    environment:
+      name: qa
+    steps:
+      - name: Authenticate to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull image
+        run: docker pull "${{ needs.prepare.outputs.image_ref }}"
+
+      - name: Smoke test image as QA
+        run: |
+          docker run -d --rm --name api-qa-cd \
+            -e APP_ENV=qa \
+            -e APP_VERSION="${{ needs.prepare.outputs.image_tag }}" \
+            -p 18001:8000 \
+            "${{ needs.prepare.outputs.image_ref }}"
+          sleep 5
+          curl -fsS http://localhost:18001/health
+
+      - name: Stop smoke container
+        if: always()
+        run: docker rm -f api-qa-cd || true

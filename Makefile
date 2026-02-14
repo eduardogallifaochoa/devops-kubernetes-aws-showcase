@@ -1,4 +1,4 @@
-.PHONY: up down logs test lint k8s-up k8s-down destroy-all
+.PHONY: up down logs test lint k8s-up k8s-down destroy-all install-k8s-tools
 
 up:
 	docker compose up -d --build
@@ -24,3 +24,6 @@ k8s-down:
 
 destroy-all:
 	./scripts/destroy-all.sh
+
+install-k8s-tools:
+	./scripts/install-k8s-tools.sh

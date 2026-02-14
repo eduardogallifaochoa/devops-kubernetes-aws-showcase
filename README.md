@@ -29,6 +29,22 @@ requirements-dev.txt
 - make
 - GitHub repository with Actions enabled
 
+## Install kind and kubectl (Ubuntu VM)
+
+### Run this
+
+```bash
+make install-k8s-tools
+kubectl version --client
+kind --version
+```
+
+### Expected output
+
+- `kubectl` client version is printed.
+- `kind` version is printed.
+- Phase 2 commands become available in your VM.
+
 ## One-Command Teardown (Local)
 
 ### Run this
@@ -216,6 +232,52 @@ Expected output:
 - No new workflow runs after disable/removal.
 - No retained GHCR images after deletion.
 
+## Phase 3.5: CD with GitHub Environments (DEV/QA)
+
+Workflow file: `.github/workflows/cd.yml`
+
+Behavior:
+- Push to `main` deploys to `dev` environment automatically (smoke test with GHCR image).
+- Manual run (`workflow_dispatch`) can deploy to `qa` with a selected image tag.
+- `qa` deployment is intended to be protected by GitHub Environment approvals.
+
+### Configure environments in GitHub
+
+1. Go to repository settings -> Environments.
+2. Create environment `dev` (no required reviewers).
+3. Create environment `qa` and set required reviewers (QA leads/team).
+
+### Run this
+
+```bash
+# Automatic DEV deployment
+git push origin main
+
+# Manual QA deployment
+# GitHub UI -> Actions -> cd -> Run workflow
+# target_environment=qa
+# image_tag=sha-<GIT_SHA> or latest
+```
+
+### Expected output
+
+- `cd` workflow runs.
+- `deploy-dev` job runs automatically on pushes to `main`.
+- `deploy-qa` waits for QA environment approval (if configured) and then runs.
+- Health smoke test calls `/health` successfully for the selected image.
+
+### Destroy everything (CD runtime)
+
+Run this:
+```bash
+# No persistent infra is created by cd.yml.
+# It starts temporary smoke-test containers in the GitHub runner and removes them in the same job.
+# Optional cleanup: disable workflow if you want zero future runs.
+```
+
+Expected output:
+- No long-lived runtime resources remain from CD runs.
+
 ## Phase 4: AWS Future Scaffold (docs only)
 
 Detailed future plan is in `docs/aws-plan.md`.
@@ -245,3 +307,9 @@ Run this:
 
 Expected output:
 - Planned sequence removes ECS, ALB, ECR, CloudWatch, and IAM demo resources to avoid costs.
+
+## Human Guide
+
+For a simple human-language explanation with metaphors and business value:
+
+- `docs/bitacora.md`
