@@ -1,5 +1,18 @@
 # Bitacora del Proyecto (version humana)
 
+## 0) Decision actual: AWS se queda en plan, no en deploy real
+
+Por ahora no se desplegara en AWS para evitar costos recurrentes innecesarios en etapa de portafolio.
+
+Que si se dejo listo:
+- Plan detallado en `docs/aws-plan.md`.
+- Pipeline y estructura para que el salto a AWS sea directo cuando convenga.
+- Estrategia de costos y teardown para no gastar de mas.
+
+Que no se hara por ahora:
+- Crear recursos reales (ECR/ECS/ALB/CloudWatch/IAM) en cuenta AWS.
+- Mantener servicios 24/7 cobrando mientras no aportan valor a la demo.
+
 ## 1) Que construimos y por que importa
 
 Imagina que este proyecto es un antro con varias puertas:
@@ -107,3 +120,23 @@ Con este sistema:
 4. QA aprueba despliegue a su ambiente.
 5. Revisar logs y health.
 6. Si no se usa, destruir recursos para evitar costo.
+
+## 9) Que hace este sistema hoy (sin AWS)
+
+- Levanta la API en local con dos ambientes (`dev` y `qa`) usando Docker Compose.
+- Expone salud/version y genera logs con contexto (`env`, `version`, request path).
+- Corre pruebas y lint en CI para bloquear cambios rotos.
+- Construye y publica imagenes en GHCR con tags trazables (`latest` y `sha-*`).
+- Ejecuta CD con environments: DEV automatico y QA manual con aprobacion.
+- Permite destruir todo local con un solo comando para no dejar basura corriendo.
+
+## 10) Skills que este proyecto showcasea
+
+- Backend API design: endpoints de estado/version y middleware de logging.
+- Containerization: Dockerfile limpio y Compose por ambientes.
+- Testing y quality gates: pytest + ruff + black.
+- Kubernetes fundamentals: namespace, deployment, service, probes e ingress con rutas.
+- CI/CD engineering: workflows separados para CI y CD con promotions por environment.
+- Release traceability: versionado por tags inmutables (`sha`).
+- Operacion y soporte: observabilidad basica, troubleshooting y teardown seguro.
+- Documentacion tecnica y funcional: guias para perfiles tecnicos y no tecnicos.
