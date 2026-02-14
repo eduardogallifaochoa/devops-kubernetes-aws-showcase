@@ -1,5 +1,10 @@
 # FastAPI DevOps Jarvis Project
 
+![Ubuntu](https://img.shields.io/badge/Ubuntu-24.04-E95420?logo=ubuntu&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-29.2.1-2496ED?logo=docker&logoColor=white)
+![Kubernetes](https://img.shields.io/badge/Kubernetes-1.30-326CE5?logo=kubernetes&logoColor=white)
+
 Simple but production-like portfolio repository with FastAPI, Docker Compose (DEV/QA), kind Kubernetes with Ingress, GitHub Actions + GHCR, and an AWS future deployment plan.
 
 ## Project Structure
