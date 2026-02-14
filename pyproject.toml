@@ -1,0 +1,16 @@
+[tool.black]
+line-length = 88
+target-version = ["py312"]
+extend-exclude = '(\\.venv|build|dist|\\.pytest_cache|\\.mypy_cache|\\.ruff_cache)'
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+extend-exclude = [".venv", "build", "dist", ".pytest_cache", ".mypy_cache", ".ruff_cache"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

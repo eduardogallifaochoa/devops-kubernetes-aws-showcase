@@ -1,0 +1,48 @@
+services:
+  api-dev:
+    build: .
+    container_name: fastapi-dev
+    environment:
+      APP_ENV: dev
+      APP_VERSION: 0.1.0-dev
+      APP_SERVICE_NAME: fastapi-showcase
+      APP_PORT: 8000
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  api-qa:
+    build: .
+    container_name: fastapi-qa
+    environment:
+      APP_ENV: qa
+      APP_VERSION: 0.1.0-qa
+      APP_SERVICE_NAME: fastapi-showcase
+      APP_PORT: 8000
+    ports:
+      - "8001:8000"
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
