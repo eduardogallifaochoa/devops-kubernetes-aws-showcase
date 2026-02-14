@@ -1,10 +1,12 @@
 name: cd
 
 on:
+  # Auto-deploy to DEV after CI succeeds on main.
   workflow_run:
     workflows: ["ci"]
     types: [completed]
     branches: [main]
+  # Manual promotion path (usually for QA).
   workflow_dispatch:
     inputs:
       target_environment:
@@ -26,6 +28,7 @@ permissions:
   deployments: write
 
 jobs:
+  # Decide target env and image tag from event type.
   prepare:
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
@@ -38,9 +41,11 @@ jobs:
         id: vars
         run: |
           if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            # CI success on main promotes the exact commit image to DEV.
             TARGET_ENV="dev"
             TAG="sha-${{ github.event.workflow_run.head_sha }}"
           else
+            # Manual runs let operators choose environment and tag.
             TARGET_ENV="${{ inputs.target_environment }}"
             TAG="${{ inputs.image_tag }}"
           fi
@@ -56,6 +61,7 @@ jobs:
     needs: prepare
     if: needs.prepare.outputs.target_environment == 'dev'
     environment:
+      # Environment-level rules are configured in repo settings.
       name: dev
     steps:
       - name: Authenticate to GHCR
@@ -69,6 +75,7 @@ jobs:
         run: docker pull "${{ needs.prepare.outputs.image_ref }}"
 
       - name: Smoke test image as DEV
+        # Lightweight runtime validation before declaring deployment success.
         run: |
           docker run -d --rm --name api-dev-cd \
             -e APP_ENV=dev \
@@ -87,6 +94,7 @@ jobs:
     needs: prepare
     if: needs.prepare.outputs.target_environment == 'qa'
     environment:
+      # QA can be protected with required reviewers.
       name: qa
     steps:
       - name: Authenticate to GHCR
@@ -100,6 +108,7 @@ jobs:
         run: docker pull "${{ needs.prepare.outputs.image_ref }}"
 
       - name: Smoke test image as QA
+        # Same validation path with QA environment variables.
         run: |
           docker run -d --rm --name api-qa-cd \
             -e APP_ENV=qa \
