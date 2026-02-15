@@ -7,6 +7,12 @@
 
 Simple but production-like portfolio repository with FastAPI, Docker Compose (DEV/QA), kind Kubernetes with Ingress, GitHub Actions + GHCR, and an AWS future deployment plan.
 
+## Video Demo
+
+[![Watch the full demo on YouTube](images/youtube%20thumbnail.png)](https://youtu.be/JWg0r2v5Oz0)
+
+Direct link: https://youtu.be/JWg0r2v5Oz0
+
 ## Project Structure
 
 ```text
